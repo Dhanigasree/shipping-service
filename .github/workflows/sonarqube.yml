@@ -71,7 +71,7 @@ jobs:
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         with:
-          args:>
+          args: >
             -Dsonar.projectKey=shipping-service
             -Dsonar.projectName=shipping-service
             -Dsonar.sources=.
