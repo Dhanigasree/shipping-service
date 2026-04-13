@@ -1,27 +1,48 @@
-name: Build
+# .github/workflows/sonar-snyk.yml
+name: Code Quality Pipeline
 
 on:
   push:
-    branches:
-      - main
-
+    branches: [ main ]  
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    permissions: read-all
+  scan: 
+    runs-on: ubuntu-latest 
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - uses: sonarsource/sonarqube-scan-action@master
+          node-version: 20
+
+      - name: Install
+        run: npm install
+        working-directory: ./src
+
+      # -------------------------------
+      # SONARCLOUD (BLOCKING)
+      # -------------------------------
+      - name: Sonar Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        with:
+          args: >
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=.
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+            -Dsonar.qualitygate.wait=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-      # If you wish to fail your job when the Quality Gate is red, uncomment the
-      # following lines. This would typically be used to fail a deployment.
-      # - uses: sonarsource/sonarqube-quality-gate-action@master
-      #   timeout-minutes: 5
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      # -------------------------------
+      # SNYK (BLOCKING)
+      # -------------------------------
+      - name: Snyk Scan 
+        uses: snyk/actions/node@master
+        with: 
+          args: --file=src/package.json
+          command: test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
