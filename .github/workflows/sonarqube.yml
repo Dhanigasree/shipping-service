@@ -1,4 +1,4 @@
-# .github/workflows/sonar-snyk.yml
+
 name: Code Quality Pipeline
 
 on:
